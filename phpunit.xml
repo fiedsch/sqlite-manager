@@ -1,0 +1,12 @@
+<!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
+<phpunit
+        bootstrap="vendor/autoload.php"
+        verbose="true"
+        colors="auto"
+>
+    <testsuites>
+        <testsuite name="basic">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

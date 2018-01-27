@@ -1,0 +1,14 @@
+# PHPStorm files
+.idea/
+
+# Vendor Directory
+/vendor/
+
+# MacOS
+/**/.DS_Store
+
+# Files used (generated) in tests
+/tests/assets/
+
+# old code
+/src/SqliteManager.php
