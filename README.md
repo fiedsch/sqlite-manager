@@ -58,7 +58,7 @@ $colconfig = [
 $sql = $manager->getAddColumnSql('foo', 'bar', $colconfig);
 // "ALTER TABLE foo ADD COLUMN bar REAL NOT NULL UNIQUE"
 // 
-
+```
 
 For column types see https://www.sqlite.org/datatype3.html
 
