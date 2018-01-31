@@ -3,9 +3,15 @@
 namespace Fiedsch\SqliteManager\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Assert;
 use Fiedsch\SqliteManager\Manager;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Class ManagerTest
+ *
+ * @package Fiedsch\SqliteManager\Tests
+ */
 class ManagerTest extends TestCase
 {
 
@@ -50,7 +56,7 @@ class ManagerTest extends TestCase
     public function testGetConnection()
     {
         $connection = $this->manager->connectTo($this->dbpath);
-        $this->assertInstanceOf(Connection::class, $connection);
+        Assert::assertInstanceOf(Connection::class, $connection);
     }
 
     /**
@@ -72,8 +78,8 @@ class ManagerTest extends TestCase
     public function testCreateTable()
     {
         $connection = $this->manager->connectTo($this->dbpath);
-        $this->assertInstanceOf(Connection::class, $connection);
-        $this->assertFalse($this->manager->assertDbFile($this->dbpath));
+        Assert::assertInstanceOf(Connection::class, $connection);
+        Assert::assertFalse($this->manager->assertDbFile($this->dbpath));
         $columns = [
             'bar' => [
                 'type' => 'TEXT',
@@ -81,13 +87,13 @@ class ManagerTest extends TestCase
         ];
         $expected = $this->manager->getCreateTableSql('foo', $columns);
         $connection->executeQuery($expected);
-        $this->assertTrue($this->manager->assertDbFile($this->dbpath));
+        Assert::assertTrue($this->manager->assertDbFile($this->dbpath));
     }
 
     /**
      * The column specifications have to make sense.
      */
-    public function testInvalidColumsSpecificationInCreateTable()
+    public function testInvalidColumsSpecification()
     {
         $columns = [
             'bar' => [
@@ -177,7 +183,7 @@ class ManagerTest extends TestCase
         $expected .= ",baz INTEGER NOT NULL DEFAULT '42'";
         //$expected .= ',CONSTRAINT unique_barbaz_constraint UNIQUE (bar,baz)';
         $expected .= ')';
-        $this->assertEquals($expected, $this->manager->getCreateTableSql($tablename, $colspec));
+        Assert::assertEquals($expected, $this->manager->getCreateTableSql($tablename, $colspec));
     }
 
     /**
@@ -188,14 +194,17 @@ class ManagerTest extends TestCase
         $colconfig = [
             'type'      => 'REAL',
             'mandatory' => true,
-            'default'   => '42',
+            'default'   => 1.5,
         ];
         $sql = $this->manager->getAddColumnSql('tablename', 'colname', $colconfig);
-        $expected = "ALTER TABLE tablename ADD COLUMN colname REAL NOT NULL DEFAULT '42'";
-        $this->assertEquals($expected, $sql);
+        $expected = "ALTER TABLE tablename ADD COLUMN colname REAL NOT NULL DEFAULT '1.5'";
+        Assert::assertEquals($expected, $sql);
 
         // you can not add a UNIQUE column
-        $colconfig['unique'] = true;
+        $colconfig = [
+            'type'      => 'REAL',
+            'unique'    => true,
+        ];
         $this->expectException(\RuntimeException::class);
         $this->manager->getAddColumnSql('tablename', 'colname', $colconfig);
     }
@@ -224,7 +233,7 @@ class ManagerTest extends TestCase
             'bar'    => 'bar',
             'newcol' => 42.0,
         ];
-        $this->assertEquals($expectedrow, $result->fetch());
+        Assert::assertEquals($expectedrow, $result->fetch());
     }
 
 }
