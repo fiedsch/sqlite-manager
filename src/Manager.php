@@ -125,40 +125,20 @@ class Manager
      */
     protected function getColSql($colname, array $colconfig)
     {
-        if (isset($colconfig['unique']) && true === $colconfig['unique']
-            && isset($colconfig['default']) && !is_null($colconfig['default'])
-        ) {
-            throw new \RuntimeException("you can not have a UNIQUE column with a DEFAULT value");
-        }
-        if (isset($colconfig['mandatory']) && true === $colconfig['mandatory']
-            && (!isset($colconfig['default']) || is_null($colconfig['default']))
-        ) {
-            throw new \RuntimeException("you can not have a NOT NULL column with default value NULL");
+        $configChecker = new ColumnConfguration($colconfig);
+        $checkedConfig = $configChecker->getConfiguration();
+        if ($configChecker->hasErrors()) {
+            throw new \RuntimeException(sprintf("there were errors in your configuration: '%s'",
+                json_encode($configChecker->getErrors())
+            ));
         }
         return preg_replace("/\s+/", ' ', trim(sprintf("%s %s %s %s %s",
             $colname,
-            $this->getColtype($colconfig),
-            $this->getNullContraint($colconfig),
-            $this->getDefaultSetting($colconfig),
-            $this->getUniqueContraint($colconfig)
+            $checkedConfig['type'],
+            $this->getNullContraint($checkedConfig),
+            $this->getDefaultSetting($checkedConfig),
+            $this->getUniqueContraint($checkedConfig)
         )));
-    }
-
-    /**
-     * Get the column type (SQLite "affinity") from the column's specification
-     * For supported column types see https://www.sqlite.org/datatype3.html
-     *
-     * @param array $colconfig The column's specification
-     * @throws \RuntimeException if the specified type is not valid
-     * @return string
-     */
-    protected function getColtype(array $colconfig)
-    {
-        $type = isset($colconfig['type']) ? $colconfig['type'] : 'column type not set';
-        if (in_array(strtoupper($type), ['INTEGER', 'TEXT', 'BLOB', 'REAL', 'NUMERIC'])) {
-            return $type;
-        }
-        throw new RuntimeException("column type '$type' is not supported'");
     }
 
     /**
@@ -169,7 +149,7 @@ class Manager
      */
     protected function getNullContraint(array $colconfig)
     {
-        if (isset($colconfig['mandatory']) && true === $colconfig['mandatory']) {
+        if (true === $colconfig['mandatory']) {
             return 'NOT NULL';
         }
         return '';
@@ -183,7 +163,7 @@ class Manager
      */
     protected function getDefaultSetting(array $colconfig)
     {
-        if (isset($colconfig['default']) && !is_null($colconfig['default'])) {
+        if (!is_null($colconfig['default'])) {
             return sprintf("DEFAULT '%s'", $colconfig['default']);
         }
         return '';
@@ -197,7 +177,7 @@ class Manager
      */
     protected function getUniqueContraint(array $colconfig)
     {
-        if (isset($colconfig['unique']) && true === $colconfig['unique']) {
+        if (true === $colconfig['unique']) {
             return 'UNIQUE';
         }
         return '';
@@ -243,12 +223,17 @@ class Manager
      */
     public function getAddColumnSql($tablename, $colname, array $colconfig)
     {
-        if (isset($colconfig['unique']) && true === $colconfig['unique']) {
+        $configChecker = new ColumnConfguration($colconfig);
+        $checkedConfig = $configChecker->getConfiguration();
+        if ($configChecker->hasErrors()) {
+            throw new \RuntimeException(sprintf("there were errors in your configuration: '%s'",
+                json_encode($configChecker->getErrors())
+            ));
+        }
+        if (true === $checkedConfig['unique']) {
             throw new \RuntimeException("you can not add a UNIQUE column");
         }
-        if (isset($colconfig['mandatory']) && true === $colconfig['mandatory']
-            && (!isset($colconfig['default']) || is_null($colconfig['default']))
-        ) {
+        if (true === $checkedConfig['mandatory'] && is_null($checkedConfig['default'])) {
             throw new \RuntimeException("you can not add a NOT NULL column with default value NULL");
         }
         return sprintf('ALTER TABLE %s ADD COLUMN %s',
