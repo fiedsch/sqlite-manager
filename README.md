@@ -47,18 +47,50 @@ Note: what is stored in `$columns[<colname>]['type']` is SQLite's "affinity"
 
 
 ### Add a column to an existing table
+
 ```php
 $manager = new \Fiedsch\SqliteManager\Manager();
 // column configuration 
 $colconfig = [
     'type'      => 'REAL',
     'mandatory' => true,
+    'default'    => 1.5,
+];
+$sql = $manager->getAddColumnSql('foo', 'bar', $colconfig);
+// "ALTER TABLE foo ADD COLUMN bar REAL NOT NULL DEFAULT '1.5'" 
+```
+
+```php
+$manager = new \Fiedsch\SqliteManager\Manager();
+// column configuration 
+$colconfig = [
+    'type'      => 'REAL',
     'unique'    => true,
 ];
 $sql = $manager->getAddColumnSql('foo', 'bar', $colconfig);
-// "ALTER TABLE foo ADD COLUMN bar REAL NOT NULL UNIQUE"
-// 
+// will throw a \RuntimeException as you can not add a unique column
+// (if the table already contains data, which we assume)
 ```
+
+
+### Augment and check configuration
+
+```php
+$configuration = [
+  'type' => 'TEXT'
+];
+$checker = new ColumnConfiguration($configuration);
+$checker->hasErrors(); // false
+$checker->getErrors(); // []
+$checker->getConfiguration();
+// [
+//     'type'      => 'TEXT',
+//     'mandatory' => false,
+//     'unique'    => false,
+//     'default'   => null
+// ]  
+```
+
 
 For column types see https://www.sqlite.org/datatype3.html
 
